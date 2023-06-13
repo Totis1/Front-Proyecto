@@ -5,12 +5,11 @@ on:
     branches:
       - main
       - master
-      - francisco
+
   pull_request:
     branches:
       - main
       - master
-      - francisco
 
 jobs:
   ci:
