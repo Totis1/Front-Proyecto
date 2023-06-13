@@ -122,7 +122,7 @@ export default {
 }
 
 .chart-item {
-  border: 1px solid #8f1616;
+  border: 1px solid #8d1717;
   padding: 10px;
 }
 </style>
