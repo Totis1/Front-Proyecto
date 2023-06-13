@@ -23,7 +23,11 @@
               <v-card-title>{{ item.id_Modelo }}</v-card-title>
               <v-card-text>{{ item.Nombre }}</v-card-text>
               <v-card-actions>
-                <v-btn text>
+                <v-btn
+                  color="red darken-4"
+                  text
+                  @click="dialogDelete(item)"
+                >
                   Eliminar
                 </v-btn>
               </v-card-actions>
@@ -91,6 +95,37 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
+    <v-dialog
+      v-model="dialogBorrado"
+      max-width="290"
+      persistent
+    >
+      <v-card>
+        <v-card-title class="text-h5">
+          Borrar el Modelo
+        </v-card-title>
+        <v-card-text>
+          ¿Seguro que deseas borrar el Modelo?
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer />
+          <v-btn
+            color="green darken-1"
+            text
+            @click="dialogBorrado = false"
+          >
+            Cancelar
+          </v-btn>
+          <v-btn
+            color="red darken-4"
+            text
+            @click="dialogBorrado = false/*borrar()*/"
+          >
+            Aceptar
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </div>
 </template>
 
@@ -107,6 +142,7 @@ export default {
       showingImageIndex: null,
       datoimagen: null,
       imageUrl: null,
+      imageDelete: {},
       newmodelo: {},
       modelo: {
         id_Modelo: '',
@@ -117,6 +153,7 @@ export default {
         Imagen: ''
       },
       dialogInsertM: false,
+      dialogBorrado: false,
       categoria: ['Prototipo', 'Protesis', 'Arte', 'Moda', 'Gadgets', 'Modelos', 'Herramientas', 'Juguetes']
     }
   },
@@ -124,6 +161,47 @@ export default {
     this.loadModelos()
   },
   methods: {
+    dialogDelete (item) {
+      this.imageDelete = item
+      this.dialogBorrado = true
+    },
+    async borrar () {
+      const config = {
+        headers: {
+          'Content-Type': 'application/json;charset=utf-8',
+          'Access-Control-Allow-Origin': '*'
+        }
+      }
+      const sendData = {
+        id_modelo: this.imageDelete.Imagen
+      }
+      // eslint-disable-next-line no-console
+      console.log(sendData)
+      await this.$axios.post('/borrarimagenmodelo', sendData, config)
+        .then((res) => {
+          if (!res.data.error) {
+            const ModeloDelete = {
+              id_Modelo: this.imageDelete.id_Modelo
+            }
+            this.$axios.post('/eliminarmodelo', ModeloDelete)
+              .then((res) => {
+              // eslint-disable-next-line no-console
+                console.log(res)
+                this.dialogBorrado = false
+                this.loadModelos()
+              }).catch((err) => {
+              // eslint-disable-next-line no-console
+                console.error(err)
+              })
+          } else {
+            alert(res.data.data)
+          }
+        })
+        .catch((e) => {
+          // eslint-disable-next-line no-console
+          console.log(e)
+        })
+    },
     showImage (index) {
       this.showingImageIndex = index
     },

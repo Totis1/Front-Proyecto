@@ -6,7 +6,7 @@
           Ventas en el Sistema
         </v-row>
         <v-row>
-          <v-btn right dark class="colorBtn" @click="registrarventa">
+          <v-btn right dark class="colorBtn" @click="registrarventa()">
             <v-icon dense style="padding-right: 10px;">
               mdi-cash-register
             </v-icon>
@@ -27,7 +27,7 @@
                   </v-btn>
                 </v-col>
                 <v-col cols="6">
-                  <v-btn icon color="red" :disabled="true" @click="dialogDelete(item)">
+                  <v-btn icon color="red" @click="dialogDelete(item)">
                     <v-icon>mdi-account-remove-outline</v-icon>
                   </v-btn>
                 </v-col>
@@ -43,10 +43,10 @@
       >
         <v-card>
           <v-card-title class="text-h5">
-            Borrado de Alumno
+            Borrar la Venta
           </v-card-title>
           <v-card-text>
-            ¿Seguro que deseas borrar el Alumno?
+            ¿Seguro que deseas borrar la venta?
           </v-card-text>
           <v-card-actions>
             <v-spacer />
@@ -276,7 +276,7 @@
               v-model="venta.Tmaterial"
               :items="tipos"
               label="Tipo de material:"
-              @change="material"
+              @change="material2"
             />
             <v-text-field
               v-model="venta.Seguro"
@@ -290,7 +290,7 @@
               outlined
               disabled
             />
-            <v-btn class="colorBtn" :disabled="!activador" dark @click="calcular()">
+            <v-btn class="colorBtn" :disabled="!activador" dark @click="calcular2()">
               Calcular Precio Total
             </v-btn> <br> <br>
             <v-text-field
@@ -301,17 +301,17 @@
               disabled
             />
             <v-menu
-              ref="menu"
-              v-model="menu"
+              ref="menu2"
+              v-model="menu2"
               :close-on-content-click="false"
-              :return-value.sync="date"
+              :return-value.sync="date2"
               transition="scale-transition"
               offset-y
               min-width="auto"
             >
               <template #activator="{ on, attrs }">
                 <v-text-field
-                  v-model="date"
+                  v-model="date2"
                   label="Fecha de Venta"
                   prepend-icon="mdi-calendar"
                   readonly
@@ -320,7 +320,7 @@
                 />
               </template>
               <v-date-picker
-                v-model="venta.Fecha"
+                v-model="date2"
                 no-title
                 scrollable
               >
@@ -328,14 +328,14 @@
                 <v-btn
                   text
                   color="primary"
-                  @click="menu = false"
+                  @click="menu2 = false"
                 >
                   Cancel
                 </v-btn>
                 <v-btn
                   text
                   color="primary"
-                  @click="$refs.menu.save(date)"
+                  @click="$refs.menu2.save(date2)"
                 >
                   OK
                 </v-btn>
@@ -347,8 +347,8 @@
           <v-btn color="warning" @click="dialogUpdateV=false">
             Cancelar
           </v-btn>
-          <v-btn color="green" :disabled="activador" @click="InsertarVenta()">
-            Crear
+          <v-btn color="green" :disabled="activador" @click="update()">
+            Actualizar
           </v-btn>
         </v-card-actions>
       </v-card>
@@ -447,7 +447,9 @@ export default {
         }
       ],
       date: (new Date(Date.now() - (new Date()).getTimezoneOffset() * 60000)).toISOString().substr(0, 10),
+      date2: (new Date(Date.now() - (new Date()).getTimezoneOffset() * 60000)).toISOString().substr(0, 10),
       menu: false,
+      menu2: false,
       dialogOpen: false,
       dialogUpdateV: false,
       dialogBorrado: false,
@@ -467,6 +469,7 @@ export default {
         Numero: 1
       },
       venta: {},
+      deleteado: {},
       modelo: {
         id_Modelo: '',
         Nombre: '',
@@ -491,9 +494,69 @@ export default {
     this.loadModelos()
   },
   methods: {
+    dialogDelete (item) {
+      this.deleteado = item.Nombre
+      this.dialogBorrado = true
+    },
+    async borrar () {
+      const config = {
+        headers: {
+          'Content-Type': 'application/json;charset=utf-8',
+          'Access-Control-Allow-Origin': '*'
+        }
+      }
+      const sendData = {
+        Nombre: this.deleteado
+      }
+      await this.$axios.post('/eliminarventa', sendData, config)
+        .then((res) => {
+          if (!res.data.error) {
+            this.dialogBorrado = false
+            this.loadVentas()
+          } else {
+            alert(res.data.data)
+          }
+        })
+        .catch((e) => {
+          // eslint-disable-next-line no-console
+          console.log(e)
+        })
+    },
     dialogU (item) {
       this.venta = item
       this.dialogUpdateV = true
+    },
+    async update () {
+      const config = {
+        headers: {
+          'Content-Type': 'application/json;charset=utf-8',
+          'Access-Control-Allow-Origin': '*'
+        }
+      }
+      const ventaUpdate = {
+        Numero: this.venta.Numero,
+        Nombre: this.venta.Nombre,
+        Categoria: this.venta.Categoria,
+        Modelo: this.venta.Modelo,
+        NombreM: this.venta.NombreM,
+        GrModelo: this.venta.GrModelo,
+        TiempoImp: this.venta.TiempoImp,
+        Tmaterial: this.venta.Tmaterial,
+        Seguro: this.venta.Seguro,
+        Insumos: this.venta.Insumos,
+        Ptotal: this.venta.Ptotal,
+        Fecha: this.date
+      }
+      await this.$axios.post('/actualizarventa', ventaUpdate, config)
+        .then((res) => {
+          // eslint-disable-next-line no-console
+          console.log(res)
+          this.dialogUpdateV = false
+          this.loadModelos()
+        }).catch((e) => {
+          // eslint-disable-next-line no-console
+          console.log(e)
+        })
     },
     calcular () {
       this.activador = false
@@ -501,7 +564,20 @@ export default {
       (0.85 * this.newventa.TiempoImp) + (30) + (15) + ((((this.newventa.GrModelo / 1000) * this.valort) +
       (0.85 * this.newventa.TiempoImp) + (30) + (15)) * (this.newventa.Seguro / 100))) * this.newventa.Numero
     },
+    calcular2 () {
+      this.activador = false
+      this.venta.Ptotal = (((this.venta.GrModelo / 1000) * this.valort) +
+      (0.85 * this.venta.TiempoImp) + (30) + (15) + ((((this.venta.GrModelo / 1000) * this.valort) +
+      (0.85 * this.venta.TiempoImp) + (30) + (15)) * (this.venta.Seguro / 100))) * this.venta.Numero
+    },
     material () {
+      const Opcion = this.tipos.find(tipo => tipo.value === this.newventa.Tmaterial)
+      if (Opcion) {
+        this.valort = Opcion.value
+        this.bandera = Opcion.text
+      }
+    },
+    material2 () {
       const Opcion = this.tipos.find(tipo => tipo.value === this.newventa.Tmaterial)
       if (Opcion) {
         this.valort = Opcion.value
@@ -589,6 +665,13 @@ export default {
       this.newventa.GrModelo = card.GrModelo
       this.newventa.TiempoImp = card.TiempoImp
       this.newventa.Insumos = 0.85 * this.newventa.TiempoImp
+
+      this.venta.Categoria = card.Categoria
+      this.venta.Modelo = card.id_Modelo
+      this.venta.NombreM = card.Nombre
+      this.venta.GrModelo = card.GrModelo
+      this.venta.TiempoImp = card.TiempoImp
+      this.venta.Insumos = 0.85 * this.venta.TiempoImp
     }
   }
 }

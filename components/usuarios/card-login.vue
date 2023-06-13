@@ -39,7 +39,7 @@
             Usuario nuevo
           </v-card-title>
           <v-card-actions>
-            <v-btn class="colorBtn" :disabled="true" block dark @click="registrarSistema">
+            <v-btn class="colorBtn" block dark @click="registrarSistema">
               <v-icon dense style="padding-right: 20px;">
                 mdi-account-credit-card-outline
               </v-icon>
